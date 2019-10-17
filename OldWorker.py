@@ -2,18 +2,20 @@
 
 from time import sleep
 from threading import Thread, Lock
-from logging import getLogger
+# from multiprocessing import Process, Lock
+from random import randint
 
 
 class OldWorker:
-    def __init__(self, worker_id, logger=None, callback=None):
+    def __init__(self, worker_id, msg_handler=None, callback=None):
         self.worker_id = worker_id
-        self.logger = logger or getLogger()
+        self.msg_handler = msg_handler
         self.callback = callback
         self.task = None
 
     def start(self):
         self.task = Thread(target=self.run, daemon=True)
+        # self.task = Process(target=self.run, daemon=True)
         self.task.start()
 
     def stop(self):
@@ -21,11 +23,23 @@ class OldWorker:
 
     def run(self):
         # Do nothing except waiting
-        self.logger.info("[Task {}] Waiting...".format(self.worker_id))
-        sleep(10)
-        self.logger.info("[Task {}] Finished!".format(self.worker_id))
+        sec = randint(3, 10)
+        self.call_msg_handler("[Task {}] Waiting {}s...".format(self.worker_id, sec))
+        sleep(sec)
+        self.call_msg_handler("[Task {}] Finished!".format(self.worker_id))
 
         # Call callback() after finished
+        self.call_callback()
+        self.call_msg_handler("[Task {}] Callback called!".format(self.worker_id))
+
+    def join(self):
+        if self.task:
+            self.task.join()
+
+    def call_msg_handler(self, msg):
+        if self.msg_handler:
+            self.msg_handler(msg)
+
+    def call_callback(self):
         if self.callback:
             self.callback()
-            self.logger.info("[Task {}] Callback called!".format(self.worker_id))

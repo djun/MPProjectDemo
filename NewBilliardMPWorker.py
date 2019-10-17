@@ -2,6 +2,7 @@
 
 
 from billiard import Process, Lock
+from logging import getLogger
 
 from CommonWorker import CommonWorker, common_run
 
